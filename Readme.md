@@ -19,8 +19,22 @@
     3.nodemone
     4.mongoose-paginate-v2
     5.multer
-    6.bcryptjs
+    6.bcrypt
+    7.cores
+    8.cookie-parser
+    9.jsonwebtoken
     
  * connect db
    db/index.js 
    config the dotenv
+
+ * create server 
+   set the middilewares
+
+ * utilities
+   asynchandler   // we make utilities for that code will be use many that we make ans use agin and again 
+   ApiError
+   ApiResponce
+
+ * create usermodel and video model 
+  increapt the password 
