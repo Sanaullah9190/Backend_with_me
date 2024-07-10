@@ -13,10 +13,11 @@ const cloudinaryUpload = async (localpath)=>{
         const response = await cloudinary.uploader.upload(localpath,{
             resource_type:"auto"
         });
-        fs.unlinkSync(localpath);
+        fs.unlinkSync(localpath);// upload file is deleted
+        // console.log(response.url);
         return response;
     } catch (error) {
-        fs.unlinkSync(localpath)
+        fs.unlinkSync(localpath) // upload file is deleted
         return null;
     }
 

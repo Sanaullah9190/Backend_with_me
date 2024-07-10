@@ -23,6 +23,7 @@
     7.cores
     8.cookie-parser
     9.jsonwebtoken
+    10.cloudinary
     
  * connect db
    db/index.js 
@@ -38,3 +39,7 @@
 
  * create usermodel and video model 
   increapt the password 
+
+ * file upload system 
+  confilg the cloidinary 
+  create the multer as middilewares
