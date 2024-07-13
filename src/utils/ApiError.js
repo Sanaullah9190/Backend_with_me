@@ -1,15 +1,15 @@
 class ApiError extends Error{
     constructor(
         statusCode,
+        massage="some thing is error",
         errors=[],
-        massage="somethin is wrong",
-        stack
+        stack =""
     ){
-        super(massage),
-        this.statusCode = statusCode,
-        this.data= null,
-        this.massage = massage,
-        this.errors =errors,
+        super(massage)
+        this.statusCode = statusCode
+        this.data= null
+        this.errors =errors
+        this.massage = massage
         this.success = false
 
         if(stack){
