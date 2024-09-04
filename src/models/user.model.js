@@ -35,7 +35,7 @@ const userSchema = new Schema(
         coverImage:{
             type:String,
         },
-        watchhistory:[
+        watchHistory:[
             {
                 type:Schema.Types.ObjectId,
                 ref:"Video"
@@ -55,6 +55,7 @@ const userSchema = new Schema(
 userSchema.pre("save",async function(next){
     if(!this.isModified("password"))  return next();
     this.password = await bcrypt.hash(this.password,10)
+    next()
 })
 
 userSchema.methods.isPasswordCorrect = async function(password){

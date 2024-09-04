@@ -4,6 +4,7 @@ import {cloudinaryUpload} from '../utils/Cloudinary.js'
 import {User} from '../models/user.model.js'
 import {ApiResponce} from '../utils/ApiResponce.js'
 import jwt from 'jsonwebtoken'
+import mongoose from 'mongoose'
 
 
 
@@ -124,7 +125,7 @@ const login = asyncHandler(async(req,res)=>{
         throw new ApiError(404,"user does not exits")
     }
 
-    const isPasswordValid = user.isPasswordCorrect(password)
+    const isPasswordValid = await user.isPasswordCorrect(password)
 
     if(!isPasswordValid){
         throw new ApiError(401,"password is incorrect")
@@ -159,7 +160,7 @@ const logout = asyncHandler(async(req,res)=>{
         req.user._id,
         {
             $unset:{
-                refreshToken:undefined,
+                refreshToken:1,
             }
         },
         {
@@ -252,9 +253,9 @@ const changeCurrentPassword = asyncHandler(async(req,res)=>{
 })
 
 const getCurrentUser = asyncHandler(async(req,res)=>{
-    return req
+    return res
     .status(200)
-    .json(200,req.user,"current user fatched succesfully")
+    .json(new ApiResponce(200,req.user,"current user fatched succesfully"))
 })
 
 const UpdateAccountDetail =asyncHandler(async(req,res)=>{
@@ -339,6 +340,128 @@ const updateCoverimage = asyncHandler(async(req,res)=>{
     .json(new ApiError(200,user,"coverImage update sucessfull"))
 })
 
+const getUserChannelProfile = asyncHandler(async(req, res) => {
+    const {username} = req.params
+
+    if (!username?.trim()) {
+        throw new ApiError(400, "username is missing")
+    }
+
+    const channel = await User.aggregate([
+        {
+            $match: {
+                username: username?.toLowerCase()
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers"
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo"
+            }
+        },
+        {
+            $addFields: {
+                subscribersCount: {
+                    $size: "$subscribers"
+                },
+                channelsSubscribedToCount: {
+                    $size: "$subscribedTo"
+                },
+                isSubscribed: {
+                    $cond: {
+                        if: {$in: [req.user?._id, "$subscribers.subscriber"]},
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                fullName: 1,
+                username: 1,
+                subscribersCount: 1,
+                channelsSubscribedToCount: 1,
+                isSubscribed: 1,
+                avatar: 1,
+                coverImage: 1,
+                email: 1
+
+            }
+        }
+    ])
+
+    if (!channel?.length) {
+        throw new ApiError(404, "channel does not exists")
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponce(200, channel[0], "User channel fetched successfully")
+    )
+})
+
+const watchHistory = asyncHandler(async(req,res)=>{
+    const user = await User.aggregate([
+        {
+            $match:{
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup:{
+                from:"videos",
+                localField:"watchHistory",
+                foreignField:"_id",
+                as:"watchHistory",
+                pipeline:[
+                    {
+                        $lookup:{
+                            from:"users",
+                            localField:"owner",
+                            foreignField:"_id",
+                            as:"owner",
+                            pipeline:[
+                                {
+                                    $project:{
+                                        fullName:1,
+                                        username:1,
+                                        avatar:1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields:{
+                            owner:{
+                                $first:"$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponce(200,user[0].watchHistory,"watchHistory fatched sucessfully")
+    )
+})
+
 
 
 export {
@@ -350,5 +473,7 @@ export {
     getCurrentUser,
     UpdateAccountDetail,
     UpdateAvatar,
-    updateCoverimage
+    updateCoverimage,
+    getUserChannelProfile,
+    watchHistory,
 }
